@@ -112,21 +112,22 @@ var App = {
     var ctx = App.context;
     var CANVAS_HEIGHT = App.canvas.height;
     var CANVAS_WIDTH = App.canvas.width;
-
     App.frames = []
     App.startTime = Date.now();
 
     toggleActivateRecordButton();
-    $('#stop-me').disabled = false;
 
     function drawVideoFrame_(time) {
       App.rafId = requestAnimationFrame(drawVideoFrame_);
-      //document.title = 'Grabando...' + Math.round((Date.now() - App.startTime) / 1000) + 's';
+      currentTime = Math.round((Date.now() - App.startTime) / 1000)
 
-      console.info(Math.round((Date.now() - App.startTime) / 1000));
+      document.title = 'Grabando...' + currentTime + 's';
 
-      //var url = App.canvas.toDataURL('image/webp', 1);
-      //App.frames.push(url);
+      if (App.setTimeRecord == currentTime) {
+        App.stopRecord();
+      } else {
+        App.frames.push(App.canvas.toDataURL('image/webp', 1));
+      }
     };
 
     App.rafId = requestAnimationFrame(drawVideoFrame_);
@@ -135,10 +136,8 @@ var App = {
   stopRecord: function() {
     cancelAnimationFrame(App.rafId);
     endTime = Date.now();
-    $('#stop-me').disabled = true;
     toggleActivateRecordButton();
-    //console.log('Frames captured: ' + frames.length + ' => ' + ((App.endTime - App.startTime) / 700) + 's video');
-    //App.embedVideo();
+    App.embedVideo();
   },
 
   embedVideo: function(opt_url) {
@@ -164,7 +163,7 @@ var App = {
       url = window.URL.createObjectURL(webmBlob);
     }
 
-    document.title = 'Video Nacho!';
+    document.title = 'Video';
     downloadLink.href = url;
   }
 };
@@ -184,7 +183,7 @@ App.init = function() {
   App.frames = [];
   App.startTime = null;
   App.endTime = null;
-  App.setTimeRecord = 60;
+  App.setTimeRecord = 8;
 
   navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
@@ -206,7 +205,7 @@ App.init = function() {
 
   $('#record-me').disabled = false;
   $('#record-me').addEventListener('click', App.startRecord);
-  $('#stop-me').addEventListener('click', App.stopRecord);
+  //$('#stop-me').addEventListener('click', App.stopRecord);
 };
 
 App.init();
