@@ -123,7 +123,7 @@ var App = {
 
       $('#record-me').innerHTML = 'Ready ' + currentTime + 's';
 
-      if (currentTime == 3) {
+      if (currentTime == App.setTimeTake) {
         App.frames.push(App.canvas.toDataURL('image/png', 1));
         App.stopTakePhoto();
       }
@@ -180,7 +180,7 @@ App.init = function() {
   App.frames = [];
   App.startTime = null;
   App.endTime = null;
-  App.setTimeRecord = 8;
+  App.setTimeTake = 3;
 
   navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
