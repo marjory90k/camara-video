@@ -205,7 +205,6 @@ App.init = function() {
 
   $('#record-me').disabled = false;
   $('#record-me').addEventListener('click', App.startRecord);
-  //$('#stop-me').addEventListener('click', App.stopRecord);
 };
 
 App.init();
