@@ -26,7 +26,7 @@ function $(selector) {
 
 function toggleActivateRecordButton() {
   var b = $('#record-me');
-  b.textContent = b.disabled ? 'Grabar de nuevo' : 'Grabando...';
+  b.textContent = b.disabled ? 'Tomar foto' : 'Tomando...';
   b.classList.toggle('recording');
   b.disabled = !b.disabled;
 }
@@ -106,7 +106,7 @@ var App = {
     }
   },
 
-  startRecord: function() {
+  takePhoto: function() {
     $('p').remove();
 
     var ctx = App.context;
@@ -117,37 +117,36 @@ var App = {
 
     toggleActivateRecordButton();
 
-    function drawVideoFrame_(time) {
-      App.rafId = requestAnimationFrame(drawVideoFrame_);
+    function counterTakePhoto_(time) {
+      App.rafId = requestAnimationFrame(counterTakePhoto_);
       currentTime = Math.round((Date.now() - App.startTime) / 1000)
 
-      document.title = $('#record-me').innerHTML = 'Grabando...' + currentTime + 's';
+      $('#record-me').innerHTML = 'Ready ' + currentTime + 's';
 
-      if (App.setTimeRecord == currentTime) {
-        App.stopRecord();
-      } else {
-        App.frames.push(App.canvas.toDataURL('image/webp', 1));
+      if (currentTime == 3) {
+        App.frames.push(App.canvas.toDataURL('image/png', 1));
+        App.stopTakePhoto();
       }
-    };
+    }
 
-    App.rafId = requestAnimationFrame(drawVideoFrame_);
+    App.rafId = requestAnimationFrame(counterTakePhoto_);
   },
 
-  stopRecord: function() {
+  stopTakePhoto: function() {
     cancelAnimationFrame(App.rafId);
     endTime = Date.now();
     toggleActivateRecordButton();
-    App.embedVideo();
+    App.embedPhoto();
   },
 
-  embedVideo: function(opt_url) {
+  embedPhoto: function(opt_url) {
     var url = opt_url || null;
 
     if (App.video) {
       downloadLink = document.createElement('a');
-      downloadLink.download = 'captura.webm';
-      downloadLink.textContent = 'Descargar video';
-      downloadLink.title = 'Descarga tu webm video';
+      downloadLink.download = 'photo.png';
+      downloadLink.textContent = 'Descargar foto';
+      downloadLink.title = 'Descarga tu foto';
       downloadLink.className = 'btn btn-default';
 
       var p = document.createElement('p');
@@ -159,11 +158,9 @@ var App = {
     }
 
     if (!url) {
-      var webmBlob = Whammy.fromImageArray(App.frames, 350 / 60);
-      url = window.URL.createObjectURL(webmBlob);
+      url = App.frames[0];
     }
 
-    document.title = 'Video';
     downloadLink.href = url;
   }
 };
@@ -204,7 +201,7 @@ App.init = function() {
   App.video.load();
 
   $('#record-me').disabled = false;
-  $('#record-me').addEventListener('click', App.startRecord);
+  $('#record-me').addEventListener('click', App.takePhoto);
 };
 
 App.init();
