@@ -121,7 +121,7 @@ var App = {
       App.rafId = requestAnimationFrame(drawVideoFrame_);
       currentTime = Math.round((Date.now() - App.startTime) / 1000)
 
-      document.title = 'Grabando...' + currentTime + 's';
+      document.title = $('#record-me').innerHTML = 'Grabando...' + currentTime + 's';
 
       if (App.setTimeRecord == currentTime) {
         App.stopRecord();
