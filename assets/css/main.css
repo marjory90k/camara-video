@@ -1,0 +1,19 @@
+body {
+  margin: 20px;
+}
+
+#output {
+  width: auto;
+  height: 100%;
+  background: black;
+  -webkit-transform: scale(-1, 1);
+}
+
+.btn {
+  margin-bottom: 20px !important;
+}
+
+canvas,
+#video-controls {
+  display: none;
+}
