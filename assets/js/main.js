@@ -169,7 +169,6 @@ var App = {
   }
 };
 
-
 App.init = function() {
   App.glasses = new Image();
   App.glasses.src = 'assets/images/glasses.png';
@@ -185,6 +184,7 @@ App.init = function() {
   App.frames = [];
   App.startTime = null;
   App.endTime = null;
+  App.setTimeRecord = 60;
 
   navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
