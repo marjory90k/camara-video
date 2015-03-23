@@ -1,7 +1,7 @@
 (function() {
   var i = 0,
-    lastTime = 0,
-    vendors = ['ms', 'moz', 'webkit', 'o'];
+  lastTime = 0,
+  vendors = ['ms', 'moz', 'webkit', 'o'];
 
   while (i < vendors.length && !window.requestAnimationFrame) {
     window.requestAnimationFrame = window[vendors[i] + 'RequestAnimationFrame'];
@@ -11,8 +11,8 @@
   if (!window.requestAnimationFrame) {
     window.requestAnimationFrame = function(callback, element) {
       var currTime = new Date().getTime(),
-        timeToCall = Math.max(0, 1000 / 60 - currTime + lastTime),
-        id = setTimeout(function() { callback(currTime + timeToCall); }, timeToCall);
+      timeToCall = Math.max(0, 1000 / 60 - currTime + lastTime),
+      id = setTimeout(function() { callback(currTime + timeToCall); }, timeToCall);
 
       lastTime = currTime + timeToCall;
       return id;
@@ -31,6 +31,117 @@ function toggleActivateRecordButton() {
   b.disabled = !b.disabled;
 }
 
+var workerPath = location.href.replace(location.href.split('/').pop(), '') + 'ffmpeg_asm.js';
+
+function processInWebWorker() {
+  var blob = URL.createObjectURL(new Blob(['importScripts("' + workerPath + '");var now = Date.now;function print(text) {postMessage({"type" : "stdout","data" : text});};onmessage = function(event) {var message = event.data;if (message.type === "command") {var Module = {print: print,printErr: print,files: message.files || [],arguments: message.arguments || [],TOTAL_MEMORY: message.TOTAL_MEMORY || false};postMessage({"type" : "start","data" : Module.arguments.join(" ")});postMessage({"type" : "stdout","data" : "Received command: " +Module.arguments.join(" ") +((Module.TOTAL_MEMORY) ? ".  Processing with " + Module.TOTAL_MEMORY + " bits." : "")});var time = now();var result = ffmpeg_run(Module);var totalTime = now() - time;postMessage({"type" : "stdout","data" : "Finished processing (took " + totalTime + "ms)"});postMessage({"type" : "done","data" : result,"time" : totalTime});}};postMessage({"type" : "ready"});'], {
+    type: 'application/javascript'
+  }));
+
+  var worker = new Worker(blob);
+  URL.revokeObjectURL(blob);
+  return worker;
+}
+
+var worker;
+
+function convertStreams(videoBlob, audioBlob) {
+  var vab;
+  var aab;
+  var buffersReady;
+  var workerReady;
+  var posted = false;
+
+  var fileReader1 = new FileReader();
+  fileReader1.onload = function() {
+    vab = this.result;
+
+    if (aab) buffersReady = true;
+
+    if (buffersReady && workerReady && !posted) postMessage();
+  };
+  var fileReader2 = new FileReader();
+  fileReader2.onload = function() {
+    aab = this.result;
+
+    if (vab) buffersReady = true;
+
+    if (buffersReady && workerReady && !posted) postMessage();
+  };
+
+  fileReader1.readAsArrayBuffer(videoBlob);
+  fileReader2.readAsArrayBuffer(audioBlob);
+
+  if (!worker) {
+    worker = processInWebWorker();
+  }
+
+  worker.onmessage = function(event) {
+    var message = event.data;
+    if (message.type == "ready") {
+      workerReady = true;
+      if (buffersReady)
+        postMessage();
+    } else if (message.type == "stdout") {
+      log(message.data);
+    } else if (message.type == "start") {
+      log('<a href="'+ workerPath +'" download="ffmpeg-asm.js">ffmpeg-asm.js</a> file received ffmpeg command.');
+    } else if (message.type == "done") {
+      log(JSON.stringify(message));
+
+      var result = message.data[0];
+      log(JSON.stringify(result));
+
+      var blob = new Blob([result.data], {
+        type: 'video/mp4'
+      });
+
+      log(JSON.stringify(blob));
+
+      PostBlob(blob);
+    }
+  };
+
+  var postMessage = function() {
+    posted = true;
+
+    worker.postMessage({
+      type: 'command',
+      arguments: [
+      '-i', 'video.webm',
+      '-i', 'audio.wav',
+      '-c:v', 'mpeg4',
+      '-c:a', 'vorbis',
+      '-b:v', '6400k',
+      '-b:a', '4800k',
+      '-strict', 'experimental', 'output.mp4'
+      ],
+      files: [
+      {
+        data: new Uint8Array(vab),
+        name: "video.webm"
+      },
+      {
+        data: new Uint8Array(aab),
+        name: "audio.wav"
+      }
+      ]
+    });
+  };
+}
+
+function PostBlob(blob) {
+  var h2 = document.createElement('h2');
+  h2.innerHTML = '<a href="' + URL.createObjectURL(blob) + '" target="_blank" download="Converted Video.mp4">Descargar</a>';
+  $('#video-controls').appendChild(h2);
+  h2.tabIndex = 0;
+  h2.focus();
+}
+
+function log(message) {
+  console.info(message);
+}
+
 var App = {
   start: function(stream) {
     $('#video-controls').style.display = 'block';
@@ -47,7 +158,7 @@ var App = {
         App.backContext = App.backCanvas.getContext('2d');
 
         var w = 300 / 4 * 0.8,
-            h = 270 / 4 * 0.8;
+        h = 270 / 4 * 0.8;
 
         App.comp = [{
           x: (App.video.videoWidth / 4 - w) / 2,
@@ -59,6 +170,8 @@ var App = {
         App.drawToCanvas();
       }, 500);
     }, true);
+
+    App.recordAudio = RecordRTC(stream, {});
 
     var domURL = window.URL || window.webkitURL;
     App.video.src = domURL ? domURL.createObjectURL(stream) : stream;
@@ -79,12 +192,12 @@ var App = {
     requestAnimationFrame(App.drawToCanvas);
 
     var video = App.video,
-      ctx = App.context,
-      backCtx = App.backContext,
-      m = 4,
-      w = 4,
-      i,
-      comp;
+    ctx = App.context,
+    backCtx = App.backContext,
+    m = 4,
+    w = 4,
+    i,
+    comp;
 
     ctx.drawImage(video, 0, 0, App.canvas.width, App.canvas.height);
 
@@ -126,9 +239,12 @@ var App = {
       if (App.setTimeRecord == currentTime) {
         App.stopRecord();
       } else {
+        console.info('>>');
         App.frames.push(App.canvas.toDataURL('image/webp', 1));
       }
     };
+
+    App.recordAudio.startRecording();
 
     App.rafId = requestAnimationFrame(drawVideoFrame_);
   },
@@ -137,11 +253,15 @@ var App = {
     cancelAnimationFrame(App.rafId);
     endTime = Date.now();
     toggleActivateRecordButton();
-    App.embedVideo();
+    App.recordAudio.stopRecording(function() {
+      console.info('Se termina!!!!!');
+      convertStreams(App.getBlob(), App.recordAudio.getBlob());
+    });
+    //App.embedVideo();
   },
 
-  embedVideo: function(opt_url) {
-    var url = opt_url || null;
+  getBlob: function(opt_url) {
+    /*var url = opt_url || null;
 
     if (App.video) {
       downloadLink = document.createElement('a');
@@ -151,7 +271,7 @@ var App = {
       downloadLink.className = 'btn btn-default';
 
       var p = document.createElement('p');
-          p.appendChild(downloadLink);
+      p.appendChild(downloadLink);
 
       $('#video-controls').appendChild(p);
     } else {
@@ -164,7 +284,9 @@ var App = {
     }
 
     document.title = 'Video';
-    downloadLink.href = url;
+    downloadLink.href = url;*/
+    var webmBlob = Whammy.fromImageArray(App.frames, 180);
+    return webmBlob;
   }
 };
 
@@ -179,18 +301,19 @@ App.init = function() {
   App.context = App.canvas.getContext('2d');
   App.info = document.querySelector('#info');
 
+  App.recordAudio = null;
   App.rafId = null;
   App.frames = [];
   App.startTime = null;
   App.endTime = null;
-  App.setTimeRecord = 8;
+  App.setTimeRecord = 10;
 
   navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
   try {
     navigator.getUserMedia_({
       video: true,
-      audio: false
+      audio: true
     }, App.start, App.denied);
   } catch (e) {
     try {
@@ -200,7 +323,7 @@ App.init = function() {
     }
   }
 
-  App.video.loop = App.video.muted = true;
+  App.video.loop = true;
   App.video.load();
 
   $('#record-me').disabled = false;
