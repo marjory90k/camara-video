@@ -184,12 +184,12 @@ var App = {
     if (App.video) {
       downloadLink = document.createElement('a');
       //downloadLink.download = 'photo.png';
-      downloadLink.textContent = 'Imprimir 1';
+      downloadLink.textContent = 'Imprimir Con Marco';
       downloadLink.className = 'btn btn-default';
 
       downloadLink2 = document.createElement('a');
       //downloadLink2.download = 'photo.png';
-      downloadLink2.textContent = 'Imprimir 2';
+      downloadLink2.textContent = 'Imprimir con Logo';
       downloadLink2.className = 'btn btn-default';
 
       var p = document.createElement('p');
