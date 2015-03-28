@@ -96,7 +96,7 @@ var App = {
   },
 
   denied: function() {
-    App.info.innerHTML = 'Camera access denied!<br>Please reload and try again.';
+    App.info.innerHTML = 'Acceso denegado!<br>Vuelva a cargar y vuelva a intentarlo.';
   },
 
   error: function(e) {
@@ -107,6 +107,7 @@ var App = {
   },
 
   drawToCanvas: function() {
+    $('#record-me').style.display = 'block';
     requestAnimationFrame(App.drawToCanvas);
 
     var video = App.video,

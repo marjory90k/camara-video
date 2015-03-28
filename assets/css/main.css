@@ -9,11 +9,21 @@ body {
   -webkit-transform: scale(-1, 1);
 }
 
-.btn {
-  margin-bottom: 20px !important;
-}
-
 canvas,
 #video-controls {
   display: none;
+}
+
+#info {
+  font-size: 18px;
+  font-weight: 300;
+  margin-top: 80px;
+}
+
+#record-me {
+  display: none;
+}
+
+.video-container {
+  text-align: center;
 }
