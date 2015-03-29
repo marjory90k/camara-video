@@ -20,15 +20,11 @@
   }
 }());
 
-function $(selector) {
-  return document.querySelector(selector) || null;
-}
-
 function toggleActivateRecordButton() {
   var b = $('#record-me');
-  b.textContent = b.disabled ? 'Tomar foto' : 'Tomando...';
-  b.classList.toggle('recording');
-  b.disabled = !b.disabled;
+  var texto = b.attr('disabled') ? 'Tomar foto' : 'Tomando...'
+  b.text(texto);
+  b.attr('disabled', !b.attr('disabled'));
 }
 
 function makepage(src) {
@@ -59,9 +55,25 @@ function printImage(src) {
   pw.document.close();
 }
 
+function shareOnFacebook(url) {
+  FB.ui({
+    method: 'feed',
+    name: 'Example takephoto',
+    link: 'http://localhost/camara-video/index.html',
+    caption: '',
+    description: '',
+    source: url,
+    message: 'Share my photo!'
+  });
+}
+
+function photo_url(source) {
+  return "http://" + document.domain + "/" + source + "";
+}
+
 var App = {
   start: function(stream) {
-    $('#video-controls').style.display = 'block';
+    $('#video-controls').show();
     App.video.addEventListener('canplay', function() {
       App.video.removeEventListener('canplay');
       setTimeout(function() {
@@ -107,7 +119,7 @@ var App = {
   },
 
   drawToCanvas: function() {
-    $('#record-me').style.display = 'block';
+    $('#record-me').show();
     requestAnimationFrame(App.drawToCanvas);
 
     var video = App.video,
@@ -140,7 +152,8 @@ var App = {
   },
 
   takePhoto: function() {
-    $('p').remove();
+    App.video.play();
+    $('#share-button').remove();
 
     var ctx = App.context;
         otherCtx = App.otherContext;
@@ -155,7 +168,7 @@ var App = {
     function counterTakePhoto_(time) {
       App.rafId = requestAnimationFrame(counterTakePhoto_);
       currentTime = Math.round((Date.now() - App.startTime) / 1000)
-      $('#record-me').innerHTML = 'Ready ' + currentTime + 's';
+      $('#record-me').html('Preparate ' + (App.setTimeTake - currentTime) + '');
 
       if (currentTime == App.setTimeTake) {
         //ctx.drawImage(App.marco1, 0, 0, App.canvas.width, App.canvas.height);
@@ -172,10 +185,22 @@ var App = {
   },
 
   stopTakePhoto: function() {
+    App.video.pause();
     cancelAnimationFrame(App.rafId);
     endTime = Date.now();
     toggleActivateRecordButton();
-    App.embedPhoto();
+    App.uploadImage();
+  },
+
+  uploadImage: function() {
+    $.ajax({
+      dataType: 'json',
+      url: 'api.php',
+      type: 'POST',
+      data: { hidden_data: App.frames[0] },
+    }).done(function(data){
+      App.sharePhoto(photo_url(data['url']));
+    });
   },
 
   embedPhoto: function(opt_url) {
@@ -190,14 +215,14 @@ var App = {
 
       downloadLink2 = document.createElement('a');
       //downloadLink2.download = 'photo.png';
-      downloadLink2.textContent = 'Imprimir';
+      downloadLink2.innerHTML = '<i class="fa fa-facebook-square"></i> Compatir';
       downloadLink2.className = 'btn btn-default';
 
-      var p = document.createElement('p');
+      //var p = document.createElement('p');
           //p.appendChild(downloadLink);
-          p.appendChild(downloadLink2);
+          //$('.video-controls').appendChild(downloadLink2);
 
-      $('#video-controls').appendChild(p);
+      $('#video-controls').appendChild(downloadLink2);
     } else {
       window.URL.revokeObjectURL(App.video.src);
     }
@@ -207,10 +232,22 @@ var App = {
       //url2 = App.frames[1];
     }
 
-    downloadLink2.href = "javascript:printImage('" + url + "')";
+    downloadLink2.href = "javascript:shareOnFacebook('" + url + "')";
+    //downloadLink2.href = "javascript:printImage('" + url + "')";
     //downloadLink.onClick = printme(event);
     //downloadLink2.href = "javascript:printImage('" + url2 + "')";
     //downloadLink2.onClick = printme(event);
+  },
+
+  sharePhoto: function(url) {
+    var downloadLink2 = $('<a>');
+    downloadLink2.attr('id', 'share-button');
+    downloadLink2.html('<i class="fa fa-facebook-square"></i> Compatir');
+    downloadLink2.addClass('btn btn-default');
+
+    $('.video').append(downloadLink2);
+
+    downloadLink2.attr('href', "javascript:shareOnFacebook('" + url + "')");
   }
 };
 
@@ -238,7 +275,7 @@ App.init = function() {
   App.frames = [];
   App.startTime = null;
   App.endTime = null;
-  App.setTimeTake = 3;
+  App.setTimeTake = 6;
 
   navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
@@ -258,8 +295,8 @@ App.init = function() {
   App.video.loop = App.video.muted = true;
   App.video.load();
 
-  $('#record-me').disabled = false;
-  $('#record-me').addEventListener('click', App.takePhoto);
+  $('#record-me').attr('disabled', false);
+  $('#record-me').on('click', App.takePhoto);
 };
 
 App.init();

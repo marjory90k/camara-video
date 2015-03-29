@@ -1,5 +1,5 @@
 body {
-  margin: 20px;
+  margin: 40px;
 }
 
 #output {
@@ -14,6 +14,13 @@ canvas,
   display: none;
 }
 
+#video-controls {
+  text-align: center;
+  width: 300px;
+  margin: 0 auto;
+  margin-top: 20px;
+}
+
 #info {
   font-size: 18px;
   font-weight: 300;
@@ -22,8 +29,29 @@ canvas,
 
 #record-me {
   display: none;
+  margin: 0 auto !important;
 }
 
 .video-container {
+  width: 640px;
+  height: 480px;
+  margin: 0 auto;
   text-align: center;
+}
+
+.video {
+  overflow: hidden;
+  width: 640px;
+  height: 480px;
+  position: relative;
+}
+
+.content {
+  display: block;
+}
+
+#share-button {
+  position: absolute;
+  top: 430px;
+  right: 20px;
 }
