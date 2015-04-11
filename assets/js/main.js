@@ -20,11 +20,10 @@
   }
 }());
 
-function toggleActivateRecordButton() {
+function toggleActivateRecordButton(texto, status) {
   var b = $('#record-me');
-  var texto = b.attr('disabled') ? 'Tomar foto' : 'Tomando...'
-  b.text(texto);
-  b.attr('disabled', !b.attr('disabled'));
+  b.text(texto || 'Tomar foto');
+  b.attr('disabled', status);
 }
 
 function makepage(src) {
@@ -58,17 +57,20 @@ function printImage(src) {
 function shareOnFacebook(url) {
   FB.ui({
     method: 'feed',
-    name: 'Example takephoto',
-    link: 'http://localhost/camara-video/index.html',
-    caption: '',
-    description: '',
+    name: 'Compartir mi foto',
+    link: 'http://teamlight.x10host.com/camara-video-facebook/',
+    caption: 'Compartir mi foto',
+    description: 'Compartiendo mi foto',
     source: url,
-    message: 'Share my photo!'
+    message: 'Compartir mi foto'
   });
+
+  console.info(url);
 }
 
 function photo_url(source) {
-  return "http://" + document.domain + "/" + source + "";
+  //return "http://" + document.domain + "/camara-video/" + source + "";
+  return "http://teamlight.x10host.com/camara-video-facebook/" + source + "";
 }
 
 var App = {
@@ -163,20 +165,18 @@ var App = {
     App.frames = []
     App.startTime = Date.now();
 
-    toggleActivateRecordButton();
+    toggleActivateRecordButton(null, true);
+
+    var setTimeTake = 6;
 
     function counterTakePhoto_(time) {
       App.rafId = requestAnimationFrame(counterTakePhoto_);
       currentTime = Math.round((Date.now() - App.startTime) / 1000)
-      $('#record-me').html('Preparate ' + (App.setTimeTake - currentTime) + '');
+      $('#record-me').html('Preparate ' + (setTimeTake - currentTime) + '');
 
-      if (currentTime == App.setTimeTake) {
-        //ctx.drawImage(App.marco1, 0, 0, App.canvas.width, App.canvas.height);
-        //App.frames.push(App.canvas.toDataURL('image/png', 1));
-
+      if (currentTime == setTimeTake) {
         otherCtx.drawImage(App.marco2, 0, 0, App.otherCanvas.width, App.otherCanvas.height);
         App.frames.push(App.otherCanvas.toDataURL('image/png', 1));
-
         App.stopTakePhoto();
       }
     }
@@ -188,11 +188,12 @@ var App = {
     App.video.pause();
     cancelAnimationFrame(App.rafId);
     endTime = Date.now();
-    toggleActivateRecordButton();
     App.uploadImage();
   },
 
   uploadImage: function() {
+    toggleActivateRecordButton('Espere un momento...', true);
+
     $.ajax({
       dataType: 'json',
       url: 'api.php',
@@ -247,6 +248,7 @@ var App = {
 
     $('.video').append(downloadLink2);
 
+    toggleActivateRecordButton(null, false);
     downloadLink2.attr('href', "javascript:shareOnFacebook('" + url + "')");
   }
 };
@@ -275,7 +277,6 @@ App.init = function() {
   App.frames = [];
   App.startTime = null;
   App.endTime = null;
-  App.setTimeTake = 6;
 
   navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
