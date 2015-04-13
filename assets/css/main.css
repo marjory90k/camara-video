@@ -17,3 +17,7 @@ canvas,
 #video-controls {
   display: none;
 }
+
+.flash {
+  border: 20px solid red;
+}

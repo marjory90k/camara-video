@@ -26,9 +26,42 @@ function $(selector) {
 
 function toggleActivateRecordButton() {
   var b = $('#record-me');
-  b.textContent = b.disabled ? 'Grabar de nuevo' : 'Grabando...';
+  b.textContent = b.disabled ? 'Tomar foto' : 'Tomando...';
   b.classList.toggle('recording');
   b.disabled = !b.disabled;
+}
+
+function makepage(src) {
+  return "<html>\n" +
+  "<head>\n" +
+  "<title>Printing</title>\n" +
+  "<script>\n" +
+  "function step1() {\n" +
+  " setTimeout('step2()', 10);\n" +
+  "}\n" +
+  "function step2() {\n" +
+  " window.print();\n" +
+  " window.close();\n" +
+  "}\n" +
+  "</scr" + "ipt>\n" +
+  "</head>\n" +
+  "<body onLoad='step1()'>\n" +
+  "<img src='" + src + "'/>\n" +
+  "</body>\n" +
+  "</html>\n";
+}
+
+function printImage(src) {
+  link = "about:blank";
+  var pw = window.open(link, "_new");
+  pw.document.open();
+  pw.document.write(makepage(src));
+  pw.document.close();
+}
+
+function sleep(ms) {
+    var unixtime_ms = new Date().getTime();
+    while(new Date().getTime() < unixtime_ms + ms) {}
 }
 
 var App = {
@@ -42,12 +75,15 @@ var App = {
         App.info.style.display = 'none';
         App.canvas.width = App.video.videoWidth;
         App.canvas.height = App.video.videoHeight;
+        App.otherCanvas.width = App.video.videoWidth;
+        App.otherCanvas.height = App.video.videoHeight;
+        App.otherContext = App.otherCanvas.getContext('2d');
         App.backCanvas.width = App.video.videoWidth / 4;
         App.backCanvas.height = App.video.videoHeight / 4;
         App.backContext = App.backCanvas.getContext('2d');
 
         var w = 300 / 4 * 0.8,
-            h = 270 / 4 * 0.8;
+            h = 470 / 4 * 0.8;
 
         App.comp = [{
           x: (App.video.videoWidth / 4 - w) / 2,
@@ -79,18 +115,19 @@ var App = {
     requestAnimationFrame(App.drawToCanvas);
 
     var video = App.video,
-      ctx = App.context,
-      backCtx = App.backContext,
-      m = 4,
-      w = 4,
-      i,
-      comp;
+        ctx = App.context,
+        backCtx = App.backContext,
+        otherCtx = App.otherContext,
+        m = 4,
+        w = 4,
+        i,
+        comp;
 
     ctx.drawImage(video, 0, 0, App.canvas.width, App.canvas.height);
-
     backCtx.drawImage(video, 0, 0, App.backCanvas.width, App.backCanvas.height);
+    otherCtx.drawImage(video, 0, 0, App.otherCanvas.width, App.otherCanvas.height);
 
-    comp = ccv.detect_objects(App.ccv = App.ccv || {
+    /*comp = ccv.detect_objects(App.ccv = App.ccv || {
       canvas: App.backCanvas,
       cascade: cascade,
       interval: 4,
@@ -103,13 +140,15 @@ var App = {
 
     for (i = App.comp.length; i--; ) {
       ctx.drawImage(App.glasses, (App.comp[i].x - w / 2) * m, (App.comp[i].y - w / 2) * m, (App.comp[i].width + w) * m, (App.comp[i].height + w) * m);
-    }
+    }*/
   },
 
-  startRecord: function() {
+  takePhoto: function() {
     $('p').remove();
 
     var ctx = App.context;
+        otherCtx = App.otherContext;
+
     var CANVAS_HEIGHT = App.canvas.height;
     var CANVAS_WIDTH = App.canvas.width;
     App.frames = []
@@ -117,37 +156,42 @@ var App = {
 
     toggleActivateRecordButton();
 
-    function drawVideoFrame_(time) {
-      App.rafId = requestAnimationFrame(drawVideoFrame_);
+    function counterTakePhoto_(time) {
+      App.rafId = requestAnimationFrame(counterTakePhoto_);
       currentTime = Math.round((Date.now() - App.startTime) / 1000)
+      $('#record-me').innerHTML = 'Ready ' + currentTime + 's';
 
-      document.title = $('#record-me').innerHTML = 'Grabando...' + currentTime + 's';
+      $('canvas').className = 'flash';
+      if (currentTime == App.setTimeTake) {
+        //ctx.drawImage(App.marco1, 0, 0, App.canvas.width, App.canvas.height);
+        //App.frames.push(App.canvas.toDataURL('image/png', 1));
 
-      if (App.setTimeRecord == currentTime) {
-        App.stopRecord();
-      } else {
-        App.frames.push(App.canvas.toDataURL('image/webp', 1));
+        otherCtx.drawImage(App.marco2, 0, 0, App.otherCanvas.width, App.otherCanvas.height);
+        App.frames.push(App.otherCanvas.toDataURL('image/png', 1));
+
+        App.stopTakePhoto();
       }
-    };
+    }
 
-    App.rafId = requestAnimationFrame(drawVideoFrame_);
+    App.rafId = requestAnimationFrame(counterTakePhoto_);
   },
 
-  stopRecord: function() {
+  stopTakePhoto: function() {
     cancelAnimationFrame(App.rafId);
     endTime = Date.now();
     toggleActivateRecordButton();
-    App.embedVideo();
+    App.embedPhoto();
   },
 
-  embedVideo: function(opt_url) {
-    var url = opt_url || null;
+  embedPhoto: function(opt_url) {
+    var url = opt_url || null,
+        url2 = opt_url || null;
 
     if (App.video) {
       downloadLink = document.createElement('a');
-      downloadLink.download = 'captura.webm';
-      downloadLink.textContent = 'Descargar video';
-      downloadLink.title = 'Descarga tu webm video';
+      downloadLink.download = 'photo.png';
+      downloadLink.textContent = 'Descargar foto';
+      downloadLink.title = 'Descarga tu foto';
       downloadLink.className = 'btn btn-default';
 
       var p = document.createElement('p');
@@ -159,12 +203,11 @@ var App = {
     }
 
     if (!url) {
-      var webmBlob = Whammy.fromImageArray(App.frames, 350 / 60);
-      url = window.URL.createObjectURL(webmBlob);
+      url = App.frames[0];
     }
 
-    document.title = 'Video';
     downloadLink.href = url;
+    $('canvas').className = '';
   }
 };
 
@@ -172,8 +215,17 @@ App.init = function() {
   App.glasses = new Image();
   App.glasses.src = 'assets/images/glasses.png';
 
+  App.marco1 = new Image();
+  App.marco1.src = 'assets/images/marco1.png';
+
+  App.marco2 = new Image();
+  App.marco2.src = 'assets/images/marco2.png';
+
   App.video = document.createElement('video');
+
   App.backCanvas = document.createElement('canvas');
+  App.otherCanvas = document.createElement('canvas');
+
   App.canvas = document.querySelector('#output');
   App.canvas.style.display = 'none';
   App.context = App.canvas.getContext('2d');
@@ -183,7 +235,7 @@ App.init = function() {
   App.frames = [];
   App.startTime = null;
   App.endTime = null;
-  App.setTimeRecord = 8;
+  App.setTimeTake = 3;
 
   navigator.getUserMedia_ = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
@@ -204,7 +256,7 @@ App.init = function() {
   App.video.load();
 
   $('#record-me').disabled = false;
-  $('#record-me').addEventListener('click', App.startRecord);
+  $('#record-me').addEventListener('click', App.takePhoto);
 };
 
 App.init();
