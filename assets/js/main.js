@@ -203,7 +203,7 @@ var App = {
 
     backCtx.drawImage(video, 0, 0, App.backCanvas.width, App.backCanvas.height);
 
-    comp = ccv.detect_objects(App.ccv = App.ccv || {
+    /*comp = ccv.detect_objects(App.ccv = App.ccv || {
       canvas: App.backCanvas,
       cascade: cascade,
       interval: 4,
@@ -216,7 +216,7 @@ var App = {
 
     for (i = App.comp.length; i--; ) {
       ctx.drawImage(App.glasses, (App.comp[i].x - w / 2) * m, (App.comp[i].y - w / 2) * m, (App.comp[i].width + w) * m, (App.comp[i].height + w) * m);
-    }
+    }*/
   },
 
   startRecord: function() {
@@ -285,7 +285,7 @@ var App = {
 
     document.title = 'Video';
     downloadLink.href = url;*/
-    var webmBlob = Whammy.fromImageArray(App.frames, 180);
+    var webmBlob = Whammy.fromImageArray(App.frames, 32);
     return webmBlob;
   }
 };

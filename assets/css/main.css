@@ -1,9 +1,10 @@
 body {
   margin: 20px;
+  background: #fff;
 }
 
 #output {
-  width: auto;
+  width: 640px !important;
   height: 100%;
   background: black;
   -webkit-transform: scale(-1, 1);
