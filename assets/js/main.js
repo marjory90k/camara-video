@@ -160,14 +160,14 @@ var App = {
       App.rafId = requestAnimationFrame(counterTakePhoto_);
       currentTime = Math.round((Date.now() - App.startTime) / 1000)
       $('#record-me').innerHTML = 'Ready ' + currentTime + 's';
-
       $('canvas').className = 'flash';
-      if (currentTime == App.setTimeTake) {
-        //ctx.drawImage(App.marco1, 0, 0, App.canvas.width, App.canvas.height);
-        //App.frames.push(App.canvas.toDataURL('image/png', 1));
 
-        otherCtx.drawImage(App.marco2, 0, 0, App.otherCanvas.width, App.otherCanvas.height);
-        App.frames.push(App.otherCanvas.toDataURL('image/png', 1));
+      if (currentTime == App.setTimeTake) {
+        ctx.drawImage(App.marco1, 0, 0, App.otherCanvas.width, App.otherCanvas.height);
+        App.frames.push(App.canvas.toDataURL('image/png', 1));
+
+        //otherCtx.drawImage(App.marco2, 0, 0, App.otherCanvas.width, App.otherCanvas.height);
+        //App.frames.push(App.otherCanvas.toDataURL('image/png', 1));
 
         App.stopTakePhoto();
       }
@@ -212,14 +212,14 @@ var App = {
 };
 
 App.init = function() {
-  App.glasses = new Image();
-  App.glasses.src = 'assets/images/glasses.png';
+  //App.glasses = new Image();
+  //App.glasses.src = 'assets/images/glasses.png';
 
   App.marco1 = new Image();
-  App.marco1.src = 'assets/images/marco1.png';
+  App.marco1.src = 'assets/images/juanitaconsalomon.png';
 
   App.marco2 = new Image();
-  App.marco2.src = 'assets/images/marco2.png';
+  App.marco2.src = 'assets/images/salomon.png';
 
   App.video = document.createElement('video');
 
