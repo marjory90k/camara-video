@@ -49,7 +49,6 @@ var App = {
           App.backCanvas.width = App.video.videoWidth / 4;
           App.backCanvas.height = App.video.videoHeight / 4;
           App.backContext = App.backCanvas.getContext("2d");
-          App.backContext = App.backCanvas.getContext("2d");
 
           var w = (300 / 4) * 0.8,
             h = (270 / 4) * 0.8;
